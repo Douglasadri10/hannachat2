@@ -1,56 +1,39 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("mensagemInput");
-  const botao = document.getElementById("enviarBtn");
-  const historico = document.getElementById("chatHistorico");
-const admin = require("firebase-admin");
-const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
+import OpenAI from "openai";
 
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-const db = getFirestore();
-const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
-  const clienteId = "RP3D9Tkzc8VRU6qZoYdg"; // altere isso se quiser simular outros clientes
-
-  function adicionarMensagem(texto, classe) {
-    const linha = document.createElement("div");
-    linha.className = `p-2 my-1 rounded-md ${classe}`;
-    linha.textContent = texto;
-    historico.appendChild(linha);
-    historico.scrollTop = historico.scrollHeight;
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  botao.addEventListener("click", async () => {
-    const mensagem = input.value.trim();
-    if (!mensagem) return;
+  const { message } = req.body;
 
-    adicionarMensagem(`Você: ${mensagem}`, "bg-blue-100 text-right");
-    input.value = "";
-    input.disabled = true;
-    botao.disabled = true;
+  if (!message) {
+    return res.status(400).json({ error: "Mensagem é obrigatória." });
+  }
 
-    try {
-      const resposta = await fetch("https://us-central1-hannaai-b1877.cloudfunctions.net/responderMensagem", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mensagem, clienteId })
-      });
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "Você é a Hanna, assistente de um centro de estética. Seja simpática, clara e ajude com agendamentos, dúvidas e informações.",
+        },
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+    });
 
-      const dados = await resposta.json();
-
-      if (dados.resposta) {
-        adicionarMensagem(`Hanna: ${dados.resposta}`, "bg-gray-100 text-left");
-      } else {
-        adicionarMensagem("Hanna: Ocorreu um erro ao responder.", "bg-red-100");
-      }
-    } catch (erro) {
-      console.error("Erro na requisição:", erro);
-      adicionarMensagem("Hanna: Erro de conexão ou servidor.", "bg-red-100");
-    }
-
-    input.disabled = false;
-    botao.disabled = false;
-    input.focus();
-  });
-});
+    const resposta = completion.choices[0].message.content;
+    res.status(200).json({ resposta });
+  } catch (error) {
+    console.error("Erro na API OpenAI:", error?.response?.data || error.message);
+    res.status(500).json({ error: "Erro ao conectar com a IA." });
+  }
+}
