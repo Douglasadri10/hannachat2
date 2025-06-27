@@ -2,7 +2,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("mensagemInput");
   const botao = document.getElementById("enviarBtn");
   const historico = document.getElementById("chatHistorico");
+const admin = require("firebase-admin");
+const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
 
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+const db = getFirestore();
+const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
   const clienteId = "RP3D9Tkzc8VRU6qZoYdg"; // altere isso se quiser simular outros clientes
 
   function adicionarMensagem(texto, classe) {
