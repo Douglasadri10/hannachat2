@@ -1,0 +1,27 @@
+{
+  "name": "Hanna Flow Trilingual",
+  "description": "Fluxo humanizado em PT, EN, ES para atendimento no Instagram",
+  "version": "1.0",
+  "languages": [
+    "pt",
+    "en",
+    "es"
+  ],
+  "steps": [
+    {
+      "id": "start",
+      "type": "message",
+      "text": "Ol\u00e1! Eu sou a Hanna, atendente virtual da M&D Solutions. Como posso te ajudar hoje?"
+    },
+    {
+      "id": "collect",
+      "type": "action",
+      "action": "collect_user_data"
+    },
+    {
+      "id": "email",
+      "type": "action",
+      "action": "send_email_to_mdsolutions"
+    }
+  ]
+}
